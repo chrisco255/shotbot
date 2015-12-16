@@ -85,7 +85,7 @@ controller.hears(['how many shots', 'how many shots do I have?'], 'ambient', fun
   });
 })
 
-controller.hears(['hello','hi','i hate you'],'direct_message,direct_mention,mention,ambient',function(bot,message) {
+controller.hears(['hello','hi','hate'],'direct_message,direct_mention,mention,ambient',function(bot,message) {
 
   bot.api.reactions.add({
     timestamp: message.ts,
@@ -97,17 +97,39 @@ controller.hears(['hello','hi','i hate you'],'direct_message,direct_mention,ment
     }
   });
 
-
   controller.storage.users.get(message.user,function(err,user) {
-    if (user && user.name) {
-      bot.reply(message,"Take a shot, " + user.name+"!!");
-    } else {
-      bot.reply(message,"Take a shot!!!");
+    if (!user) {
+      user = {
+        id: message.user,
+      }
     }
+
+    if(!user.shots) {
+      user.shots = 1;
+    } else {
+      user.shots++;
+    }
+    controller.storage.users.save(user,function(err,id) {
+    if (user && user.name) {
+      bot.reply(message,"Take a shot, " + user.name+ "!\n" + "You now have " + user.shots + " shots.");
+    } else {
+      bot.reply(message,"Take a shot!\n" + "You now have " + user.shots + " shots.");
+    }
+    });
   });
 });
 
 controller.hears(['makearule (.*)'], 'direct_message,direct_mention,mention,ambient', function(bot, message) {
+  bot.api.reactions.add({
+    timestamp: message.ts,
+    channel: message.channel,
+    name: 'cop',
+  },function(err,res) {
+    if (err) {
+      bot.log("Failed to add emoji reaction :(",err);
+    }
+  });
+
   if(!message.channel) return;
 
 
@@ -131,6 +153,16 @@ controller.hears(['makearule (.*)'], 'direct_message,direct_mention,mention,ambi
     channel.rules.push(rules);
 
     controller.hears(rules, 'ambient', function(bot, message) {
+
+      bot.api.reactions.add({
+        timestamp: message.ts,
+        channel: message.channel,
+        name: 'beer',
+      },function(err,res) {
+        if (err) {
+          bot.log("Failed to add emoji reaction :(",err);
+        }
+      });
 
       controller.storage.users.get(message.user,function(err,user) {
         if (!user) {
