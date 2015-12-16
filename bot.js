@@ -77,13 +77,20 @@ var bot = controller.spawn(
   }
 ).startRTM();
 
+controller.hears(['how many shots', 'how many shots do I have?'], 'ambient', function(bot, message) {
+  controller.storage.users.get(message.user,function(err,user) {
+    if(user.shots) {
+      bot.reply(message, 'You have to take ' + user.shots + ' shots.  Hurry up!!!');
+    }
+  });
+})
 
-controller.hears(['hello','hi'],'direct_message,direct_mention,mention',function(bot,message) {
+controller.hears(['hello','hi','i hate you'],'direct_message,direct_mention,mention,ambient',function(bot,message) {
 
   bot.api.reactions.add({
     timestamp: message.ts,
     channel: message.channel,
-    name: 'robot_face',
+    name: 'beer',
   },function(err,res) {
     if (err) {
       bot.log("Failed to add emoji reaction :(",err);
@@ -93,12 +100,64 @@ controller.hears(['hello','hi'],'direct_message,direct_mention,mention',function
 
   controller.storage.users.get(message.user,function(err,user) {
     if (user && user.name) {
-      bot.reply(message,"Hello " + user.name+"!!");
+      bot.reply(message,"Take a shot, " + user.name+"!!");
     } else {
-      bot.reply(message,"Hello.");
+      bot.reply(message,"Take a shot!!!");
     }
   });
-})
+});
+
+controller.hears(['makearule (.*)'], 'direct_message,direct_mention,mention,ambient', function(bot, message) {
+  if(!message.channel) return;
+
+
+  var parts = message.text.split(' - ');
+
+  if(parts.length < 3) return;
+
+  var reply = parts[1];
+  var rules = parts.slice(2);
+
+  controller.storage.channels.get(message.channel, function(err, channel) {
+    if(!channel) {
+      channel = {
+        id: message.channel
+      }
+    }
+    if(!channel.rules) {
+      channel.rules = [];
+    }
+
+    channel.rules.push(rules);
+
+    controller.hears(rules, 'ambient', function(bot, message) {
+
+      controller.storage.users.get(message.user,function(err,user) {
+        if (!user) {
+          user = {
+            id: message.user,
+          }
+        }
+
+        if(!user.shots) {
+          user.shots = 1;
+        } else {
+          user.shots++;
+        }
+
+        controller.storage.users.save(user,function(err,id) {
+          if (user.name) {
+            bot.reply(message, reply + " Take a shot " + user.name + "!!\n  You have now " + user.shots + " to go...");
+          } else {
+            bot.reply(message, reply + " Take a shot!!! \n You have now " + user.shots + " to go...");
+          }
+        })
+
+      });
+
+    });
+  });
+});
 
 controller.hears(['call me (.*)'],'direct_message,direct_mention,mention',function(bot,message) {
   var matches = message.text.match(/call me (.*)/i);
@@ -152,6 +211,21 @@ controller.hears(['shutdown'],'direct_message,direct_mention,mention',function(b
       }
     ])
   })
+})
+
+controller.hears(['question me','lets talk'],'direct_message,direct_mention,mention',function(bot,message) {
+
+  // start a conversation to handle this response.
+   bot.startConversation(message,function(err,convo) {
+
+     convo.ask('How are you?',function(response,convo) {
+
+       convo.say('Cool, you said: ' + response.text);
+       convo.next();
+
+     });
+
+   })
 })
 
 
