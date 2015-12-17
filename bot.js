@@ -75,51 +75,65 @@ var bot = controller.spawn(
   {
     token:process.env.token
   }
-).startRTM();
+).startRTM(); /* Start the connection... */
 
+/* When shotbot hears these phrases, it will respond with
+   the amount of shots the user has. */
 controller.hears(['how many shots', 'how many shots do I have?'], 'ambient', function(bot, message) {
-  controller.storage.users.get(message.user,function(err,user) {
-    if(user.shots) {
-      bot.reply(message, 'You have to take ' + user.shots + ' shots.  Hurry up!!!');
-    }
-  });
-})
-
-controller.hears(['hello','hi','hate'],'direct_message,direct_mention,mention,ambient',function(bot,message) {
-
-  bot.api.reactions.add({
-    timestamp: message.ts,
-    channel: message.channel,
-    name: 'beer',
-  },function(err,res) {
-    if (err) {
-      bot.log("Failed to add emoji reaction :(",err);
-    }
-  });
-
   controller.storage.users.get(message.user,function(err,user) {
     if (!user) {
       user = {
         id: message.user,
       }
     }
-
     if(!user.shots) {
-      user.shots = 1;
-    } else {
-      user.shots++;
+      bot.reply(message, 'You do not have any shots.');
     }
+    if (user.shots === 1) {
+      bot.reply(message, 'You only have ' + user.shots + ' shot...');
+    }
+    if(user.shots > 1) {
+      bot.reply(message, 'You have to take ' + user.shots + ' shots.  Hurry up!!!');
+    }
+  })
+});
+
+/* When shotbot hears these phrases, it's going to respond
+   with a greeting */
+controller.hears(['hello','hi','howdy','hey'],'direct_message,direct_mention,mention',function(bot,message) {
+
+    bot.api.reactions.add({
+      timestamp: message.ts,
+      channel: message.channel,
+      name: 'robot_face',
+    },function(err,res) {
+      if (err) {
+        bot.log("Failed to add emoji reaction :(",err);
+      }
+    });
+
+    controller.storage.users.get(message.user,function(err,user) {
+    if (!user) {
+      user = {
+        id: message.user,
+      }
+    }
+
     controller.storage.users.save(user,function(err,id) {
     if (user && user.name) {
-      bot.reply(message,"Take a shot, " + user.name+ "!\n" + "You now have " + user.shots + " shots.");
+      bot.reply(message,"Hello " + user.name+ "!");
     } else {
-      bot.reply(message,"Take a shot!\n" + "You now have " + user.shots + " shots.");
+      bot.reply(message,"Hello!");
     }
     });
   });
 });
 
-controller.hears(['makearule (.*)'], 'direct_message,direct_mention,mention,ambient', function(bot, message) {
+/* Have the user create their own customized rule
+   which will be stored on the channel it was declared.
+   Whoever mentions any of the phrases provided in the rule,
+   will receive a shot. */
+controller.hears(['makearule (.*)'], 'ambient', function(bot, message) {
   bot.api.reactions.add({
     timestamp: message.ts,
     channel: message.channel,
@@ -131,7 +145,6 @@ controller.hears(['makearule (.*)'], 'direct_message,direct_mention,mention,ambi
   });
 
   if(!message.channel) return;
-
 
   var parts = message.text.split(' - ');
 
@@ -191,6 +204,7 @@ controller.hears(['makearule (.*)'], 'direct_message,direct_mention,mention,ambi
   });
 });
 
+
 controller.hears(['call me (.*)'],'direct_message,direct_mention,mention',function(bot,message) {
   var matches = message.text.match(/call me (.*)/i);
   var name = matches[1];
@@ -218,7 +232,7 @@ controller.hears(['what is my name','who am i'],'direct_message,direct_mention,m
   })
 });
 
-//testing gits commit and push
+
 controller.hears(['shutdown'],'direct_message,direct_mention,mention',function(bot,message) {
 
   bot.startConversation(message,function(err,convo) {
