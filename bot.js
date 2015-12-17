@@ -218,7 +218,7 @@ controller.hears(['what is my name','who am i'],'direct_message,direct_mention,m
   })
 });
 
-
+//testing gits commit and push
 controller.hears(['shutdown'],'direct_message,direct_mention,mention',function(bot,message) {
 
   bot.startConversation(message,function(err,convo) {
