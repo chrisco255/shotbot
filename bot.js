@@ -101,7 +101,6 @@ controller.hears(['how many shots', 'how many shots do I have?'], 'ambient', fun
 /* When shotbot hears these phrases, it's going to respond
    with a greeting */
 controller.hears(['hello','hi','howdy','hey'],'direct_message,direct_mention,mention',function(bot,message) {
-
     bot.api.reactions.add({
       timestamp: message.ts,
       channel: message.channel,
@@ -127,6 +126,18 @@ controller.hears(['hello','hi','howdy','hey'],'direct_message,direct_mention,men
     }
     });
   });
+});
+
+/* When shotbot hears this phrase, it's going to
+   deduct the number of shots from the user */
+controller.hears(['i took (.*) shots'],'direct_message,direct_mention,mention',function(bot,message) {
+    //Not sure about the "(.*)" for getting just the number
+});
+
+/* When shotbot hears this phrase, it's going to
+   give a shot to the specified user */
+controller.hears(['take a shot (.*)'],'ambient', function(bot, message) {
+    //Get the users name and add a shot for that user
 });
 
 /* Have the user create their own customized rule
@@ -197,14 +208,14 @@ controller.hears(['makearule (.*)'], 'ambient', function(bot, message) {
             bot.reply(message, reply + " Take a shot!!! \n You have now " + user.shots + " to go...");
           }
         })
-
       });
-
     });
   });
 });
 
-
+/* When shotbot hears call me ..., anything
+after that, it will refer to that user as that
+name. */
 controller.hears(['call me (.*)'],'direct_message,direct_mention,mention',function(bot,message) {
   var matches = message.text.match(/call me (.*)/i);
   var name = matches[1];
@@ -221,8 +232,11 @@ controller.hears(['call me (.*)'],'direct_message,direct_mention,mention',functi
   })
 });
 
+/* When shotbot hears this phrase,
+   it's going to reply with the person's name,
+   if they were told to call that person
+   something. */
 controller.hears(['what is my name','who am i'],'direct_message,direct_mention,mention',function(bot,message) {
-
   controller.storage.users.get(message.user,function(err,user) {
     if (user && user.name) {
       bot.reply(message,"Your name is " + user.name);
@@ -232,9 +246,9 @@ controller.hears(['what is my name','who am i'],'direct_message,direct_mention,m
   })
 });
 
-
+/* This phrase will shutdown the server and
+   shotbot will appear offline. */
 controller.hears(['shutdown'],'direct_message,direct_mention,mention',function(bot,message) {
-
   bot.startConversation(message,function(err,convo) {
     convo.ask("Are you sure you want me to shutdown?",[
       {
@@ -257,10 +271,9 @@ controller.hears(['shutdown'],'direct_message,direct_mention,mention',function(b
       }
     ])
   })
-})
+});
 
 controller.hears(['question me','lets talk'],'direct_message,direct_mention,mention',function(bot,message) {
-
   // start a conversation to handle this response.
    bot.startConversation(message,function(err,convo) {
 
@@ -270,12 +283,13 @@ controller.hears(['question me','lets talk'],'direct_message,direct_mention,ment
        convo.next();
 
      });
-
    })
 })
 
-
-controller.hears(['uptime','identify yourself','who are you','what is your name'],'direct_message,direct_mention,mention',function(bot,message) {
+/* When shotbot hears these phrases, it's going
+   to respond with what it can do and how to
+   use shotbot.*/
+controller.hears(['identify yourself','who are you','what is your name'],'direct_message,direct_mention,mention',function(bot,message) {
 
   var hostname = os.hostname();
   var uptime = formatUptime(process.uptime());
